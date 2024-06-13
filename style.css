@@ -1,0 +1,11 @@
+#startPage {
+    display: block;
+  }
+  
+  #battlePage {
+    display: none;
+  }
+  
+  #magicMenu {
+    margin-top: 10px;
+  }

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Simple Battle System</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="startPage" class="container">
+    <h1 class="text-center">Welcome to the Battle!</h1>
+    <button onclick="startGame()" class="btn btn-primary btn-block">Start Game</button>
+  </div>
+
+  <div id="battlePage" class="container">
+    <div class="row">
+      <div class="col-md-6">
+        <h2 id="heroStats"></h2>
+      </div>
+      <div class="col-md-6">
+        <h2 id="enemyStats"></h2>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <div id="battleMenu">
+          <button id="attackButton" class="btn btn-primary">Attack</button>
+          <button id="magicButton" class="btn btn-info">Magic</button>
+        </div>
+        <div id="magicMenu" style="display: none;">
+          <button class="btn btn-secondary">Fire</button>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <div id="battleOutput"></div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <button id="confirmButton" class="btn btn-success" style="display: none;">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="battle_system.js"></script>
+</body>
+</html>
