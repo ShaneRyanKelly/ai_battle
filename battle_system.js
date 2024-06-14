@@ -17,6 +17,8 @@ class PlayerCharacter {
     this.speed = data.speed || 0;
     this.attack = data.attack || 0;
     this.defense = data.defense || 0;
+    this.magicDefense = data.magicDefense || 0;
+    this.inventory = [];
   }
 }
 
@@ -28,14 +30,111 @@ function calculateTurnNumber(player) {
 
 function performAttack(attacker, defender) {
   const baseDamage = attacker.attack - (defender.defense / 2);
-  const randomModifier = ((baseDamage + 1) * Math.random()) / 256;
-  const damage = Math.floor((baseDamage + randomModifier) / 4);
-  defender.hp -= damage;
+  const hitChance = Math.random();
+  const critChance = Math.random();
 
-  // Output battle log message
-  const outputDiv = document.getElementById("battleOutput");
-  outputDiv.innerHTML += `${attacker.name} attacks ${defender.name} for ${damage} damage!<br>`;
+  if (hitChance <= 0.2) { // 20% chance to miss
+    const outputDiv = document.getElementById("battleOutput");
+    outputDiv.innerHTML += `${attacker.name} misses ${defender.name}!<br>`;
+  } else {
+    let damage = Math.floor((baseDamage + (Math.random() * baseDamage / 2)) / 4);
+    if (critChance <= 0.1) { // 10% chance to crit
+      damage *= 2;
+      const outputDiv = document.getElementById("battleOutput");
+      outputDiv.innerHTML += `${attacker.name} critically hits ${defender.name} for ${damage} damage!<br>`;
+    } else {
+      const outputDiv = document.getElementById("battleOutput");
+      outputDiv.innerHTML += `${attacker.name} hits ${defender.name} for ${damage} damage!<br>`;
+    }
+    defender.hp -= damage;
+  }
+
   updateStats();
+}
+
+function performMagicSpell(attacker, defender, spellType) {
+  const baseEffect = attacker.attack * 1.5;
+  const magicDefense = defender.magicDefense;
+  const hitChance = Math.random();
+  const critChance = Math.random();
+
+  if (hitChance <= 0.2) { // 20% chance to miss
+    const outputDiv = document.getElementById("battleOutput");
+    outputDiv.innerHTML += `${attacker.name} misses ${defender.name} with their magic!<br>`;
+  } else {
+    let effect = Math.floor((baseEffect + (Math.random() * baseEffect / 2)) / 4);
+    if (critChance <= 0.1) { // 10% chance to crit
+      effect *= 2;
+    }
+
+    if (spellType === "magic") {
+      defender.hp -= effect;
+      const outputDiv = document.getElementById("battleOutput");
+      outputDiv.innerHTML += `${attacker.name} hits ${defender.name} with their magic for ${effect} damage!<br>`;
+    } else if (spellType === "cure") {
+      attacker.hp += effect;
+      if (attacker.hp > attacker.maxHP) {
+        attacker.hp = attacker.maxHP;
+      }
+      const outputDiv = document.getElementById("battleOutput");
+      outputDiv.innerHTML += `${attacker.name} uses Cure and regains ${effect} HP!<br>`;
+    }
+
+    attacker.mp -= 7; // Reduce attacker's MP
+  }
+}
+
+function calculateCureAmount(character) {
+  const baseCure = 20;
+  const intelligenceModifier = character.intelligence / 10;
+  return Math.floor(baseCure + (Math.random() * intelligenceModifier));
+}
+
+function performTurn(hero, enemy, heroAction) {
+  const heroTurnNumber = calculateTurnNumber(hero);
+  const enemyTurnNumber = calculateTurnNumber(enemy);
+
+  let firstTurn, secondTurn;
+  if (heroTurnNumber >= enemyTurnNumber) {
+    firstTurn = hero;
+    secondTurn = enemy;
+  } else {
+    firstTurn = enemy;
+    secondTurn = hero;
+  }
+
+  if (firstTurn === hero) {
+    if (heroAction === "attack") {
+      performAttack(hero, enemy);
+    } else if (heroAction === "magic") {
+      performMagicSpell(hero, enemy, "magic");
+    } else if (heroAction === "cure") {
+      performMagicSpell(hero, enemy, "cure");
+    }
+    if (enemy.hp > 0) {
+      performAttack(enemy, hero);
+    }
+  } else {
+    performAttack(enemy, hero);
+    if (hero.hp > 0) {
+      if (heroAction === "attack") {
+        performAttack(hero, enemy);
+      } else if (heroAction === "magic") {
+        performMagicAttack(hero, enemy);
+      } else if (heroAction === "cure") {
+        const cureAmount = calculateCureAmount(hero);
+        hero.hp += cureAmount;
+        if (hero.hp > hero.maxHP) {
+          hero.hp = hero.maxHP;
+        }
+        const outputDiv = document.getElementById("battleOutput");
+        outputDiv.innerHTML += `Hero uses Cure and regains ${cureAmount} HP!<br>`;
+      }
+    }
+  }
+
+  updateStats();
+  checkVictory(hero, enemy);
 }
 
 function updateStats() {
@@ -62,6 +161,63 @@ function increaseEnemyStats() {
   enemy.defense = Math.round(enemy.defense * (enemyStatsMultiplier + (Math.random() * enemyStatsVariance)));
 }
 
+function initBattle() {
+  // Increase enemy stats
+  increaseEnemyStats();
+  enemy.hp = Math.round(enemy.maxHP); // Restore enemy HP and round to nearest whole number
+  hero.hp = hero.maxHP; // Restore player HP
+  hero.mp = Math.floor(hero.maxMP * 0.3); // Restore 30% of hero's MP
+
+  // Show battle menu
+  document.getElementById("battleMenu").style.display = "block";
+
+  // Determine who goes first
+  const heroTurnNumber = calculateTurnNumber(hero);
+  const enemyTurnNumber = calculateTurnNumber(enemy);
+
+  let currentTurn = heroTurnNumber >= enemyTurnNumber ? hero : enemy;
+
+  // Attack button event listener
+  const attackButton = document.getElementById("attackButton");
+  attackButton.onclick = function attackButtonClickListener() {
+    performTurn(hero, enemy, "attack");
+  };
+
+  const magicButton = document.getElementById("magicButton");
+  magicButton.onclick = function magicButtonClickListener() {
+    const magicMenu = document.getElementById("magicMenu");
+    if (magicMenu.style.display === "block") {
+      magicMenu.style.display = "none";
+    } else {
+      magicMenu.style.display = "block";
+    }
+  };
+
+  const cureButton = document.getElementById("cureButton");
+  cureButton.onclick = function() {
+    performTurn(hero, enemy, "cure");
+  };
+
+  const fireButton = document.getElementById("fireButton");
+  fireButton.onclick = function() {
+    performTurn(hero, enemy, "magic");
+  };
+
+  const itemsButton = document.getElementById("itemsButton");
+  itemsButton.onclick = function itemsButtonClickListener() {
+    const inventoryMenu = document.getElementById("inventoryMenu");
+    if (inventoryMenu.style.display === "block") {
+      inventoryMenu.style.display = "none";
+    } else {
+      inventoryMenu.style.display = "block";
+    }
+  };
+
+  const outputDiv = document.getElementById("battleOutput");
+  outputDiv.innerHTML += `The battle begins! ${currentTurn.name} goes first.<br>`;
+  updateStats();
+}
+
 function startBattle() {
   const outputDiv = document.getElementById("battleOutput");
   outputDiv.innerHTML = ""; // Clear previous battle log
@@ -82,7 +238,8 @@ function startBattle() {
     agility: 16,
     speed: 12,
     attack: 75,
-    defense: 15
+    defense: 15,
+    magicDefense: 10 // Add magicDefense to hero
   });
   enemy = new PlayerCharacter({
     name: "Enemy",
@@ -99,16 +256,18 @@ function startBattle() {
     agility: 14,
     speed: 10,
     attack: 70,
-    defense: 12
+    defense: 12,
+    magicDefense: 8 // Add magicDefense to enemy
   });
-
-  continueBattle();
+  hero.inventory.push({ name: "Potion", quantity: 1 });
+  initBattle();
 }
 
 document.getElementById("confirmButton").onclick = function() {
   document.getElementById("battleOutput").innerHTML = "";
-  document.getElementById("attackButton").style.display = "block";
+  document.getElementById("battleMenu").style.display = "block";
   document.getElementById("confirmButton").style.display = "none";
+  continueBattle(); // Call continueBattle() here
 };
 
 function continueBattle() {
@@ -117,41 +276,7 @@ function continueBattle() {
   enemy.hp = Math.round(enemy.maxHP); // Restore enemy HP and round to nearest whole number
   hero.hp = hero.maxHP; // Restore player HP
 
-  // Show battle menu
-  document.getElementById("battleMenu").style.display = "block";
-
-  // Determine who goes first
-  const heroTurnNumber = calculateTurnNumber(hero);
-  const enemyTurnNumber = calculateTurnNumber(enemy);
-
-  let currentTurn = heroTurnNumber >= enemyTurnNumber ? hero : enemy;
-
-  // Attack button event listener
-  const attackButton = document.getElementById("attackButton");
-  attackButton.onclick = function attackButtonClickListener() {
-    if (currentTurn === hero) {
-      performAttack(hero, enemy);
-      currentTurn = enemy;
-    } else {
-      performAttack(enemy, hero);
-      currentTurn = hero;
-    }
-    checkVictory(hero, enemy);
-  };
-
-  const magicButton = document.getElementById("magicButton");
-  magicButton.onclick = function magicButtonClickListener() {
-    const magicMenu = document.getElementById("magicMenu");
-    if (magicMenu.style.display === "block") {
-      magicMenu.style.display = "none";
-    } else {
-      magicMenu.style.display = "block";
-    }
-  };
-
-  const outputDiv = document.getElementById("battleOutput");
-  outputDiv.innerHTML += `The battle begins! ${currentTurn.name} goes first.<br>`;
-  updateStats();
+  initBattle(); // Call initBattle() here
 }
 
 function restartBattle() {
@@ -179,12 +304,9 @@ function checkVictory(hero, enemy) {
     // Reset the game
     restartBattle();
   } else if (enemy.hp <= 0) {
-    outputDiv.innerHTML += "You are victorious!<br>";
-    outputDiv.innerHTML = outputDiv.innerHTML.split('<br>').slice(-1).join('<br>');
+    outputDiv.innerHTML += "You are victorious! Congratulations!<br>";
     document.getElementById("battleMenu").style.display = "none";
     document.getElementById("confirmButton").style.display = "block";
-    // Continue to the next battle
-    continueBattle();
   }
 }
 

@@ -11,7 +11,7 @@
     <button onclick="startGame()" class="btn btn-primary btn-block">Start Game</button>
   </div>
 
-  <div id="battlePage" class="container">
+  <div id="battlePage" class="container" style="display: none;">
     <div class="row">
       <div class="col-md-6">
         <h2 id="heroStats"></h2>
@@ -25,20 +25,24 @@
         <div id="battleMenu">
           <button id="attackButton" class="btn btn-primary">Attack</button>
           <button id="magicButton" class="btn btn-info">Magic</button>
-        </div>
-        <div id="magicMenu" style="display: none;">
-          <button class="btn btn-secondary">Fire</button>
-        </div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-12">
-        <div id="battleOutput"></div>
+          <div id="magicMenu" style="display: none;">
+            <button id="fireButton" class="btn btn-secondary">Fire</button>
+            <button id="cureButton" class="btn btn-secondary">Cure</button>
+          </div>
+          <button id="itemsButton" class="btn btn-success">Items</button>
+          <div id="inventoryMenu" style="display: none;">
+            <button class="btn btn-secondary">Potion</button>
+          </div>
       </div>
     </div>
     <div class="row">
       <div class="col-md-12">
         <button id="confirmButton" class="btn btn-success" style="display: none;">Confirm</button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <div id="battleOutput"></div>
       </div>
     </div>
   </div>
